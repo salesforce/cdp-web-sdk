@@ -1,0 +1,48 @@
+{
+  "name": "cdp-web-sdk",
+  "version": "1.5.0",
+  "description": "Javascript SDK to send events to CDP",
+  "main": "bin/cdp-web-sdk.js",
+  "scripts": {
+    "dev": "webpack-dev-server --config webpack.config.js --hot",
+    "build": "webpack --config webpack.config.js",
+    "test": "jest --coverage"
+  },
+  "files": [
+    "bin/*",
+    "README.md",
+    ".browserslistrc",
+    "package.json"
+  ],
+  "jest": {
+    "collectCoverage": true,
+    "coverageReporters": [
+      "html",
+      "text"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 70
+      }
+    },
+    "moduleNameMapper": {
+      "^@app(.*)$": "<rootDir>/src$1"
+    }
+  },
+  "author": "",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
+    "@jest/globals": "^26.4.2",
+    "babel-jest": "^26.3.0",
+    "jest": "^26.4.2",
+    "terser-webpack-plugin": "^4.2.1",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
+}

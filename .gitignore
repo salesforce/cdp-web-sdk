@@ -1,0 +1,10 @@
+.classpath
+.project
+.settings/
+/.idea/
+node_modules/
+*.iml
+.DS_Store
+*.jks
+/test_site/website/
+/coverage/
