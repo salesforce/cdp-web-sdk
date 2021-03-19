@@ -2,23 +2,21 @@
 
 The Web SDK consumes this Configuration Object to automatically generate and assigns event listeners to the related DOM elements.
  
-The Configuration Object structure has several attributes as indicated in the following. All the attributes except `client` are optional. 
+The Configuration Object structure has several attributes as indicated in the following. All of the attributes except `client` are optional. 
   
 
 ```javascript
 {
     client: {},
     signals: [],
-    selectors: {}
+    selectors: {},
     schemas: {},
-    dataProviders: {},
-    transforms: {},
-    conditions: {}
+    dataProviders: {}
 }
 ```
 
 ### Client
-List of CDP Client Configuration parameters are described in the following table. The parameters that are not optional needs to be provided be the user. 
+A list of CDP Client Configuration parameters are described in the following table.
 
 | Field Name                         | Type    | Default     | Required | Description                                                                                                                                                                |
 |------------------------------------|---------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -27,37 +25,28 @@ List of CDP Client Configuration parameters are described in the following table
 | authEndpoint                       | String  |             | yes      | The `authEndpoint` structure is `http://<Tenant Specific Endpoint>/web/authentication`. Refer to [this document](https://help.salesforce.com/articleView?id=sf.c360_a_tenant_specific_endpoint.htm&type=5) to find your tenant specific endpoint.                                     |
 | deviceId                           | String  |             | no       | `deviceId` can also be defined in the client configuration if needed, otherwise the identifier created and managed by the SDK will be used.                                |
 | sessionId                          | String  |             | no       | `sessionId` will be automatically populated by Web SDK and no need to be defined by the user                                                                               |
-| consentEventTypeName               | String  | consent-log | no       | This parameter set the name of the Consent Event Type. The default name `consent-log` will work for most configurations.                                                   |
+| consentEventTypeName               | String  | consentLog  | no       | This parameter set the name of the Consent Event Type. The default name `consentLog` will work for most configurations.                                                   |
 | retryAttempts                      | Integer | 3           | no       | This parameter is the number of retry attempts in case of failing sending events to the Beacon service.                                                                    |
 | retryDelayMS                       | Integer | 3000        | no       | This parameter is the delay duration between retry attempts (milliseconds) in case of failing sending events to the Beacon service.                                        |
 | automaticallyTrackNavigationEvents | Boolean | false       | no       | by enabling this flag, the Web SDK will automatically track the user page navigation events and captures   `document.location.hash`   and   ` document.location.pathname`. |
 
 ### Signals
-Signals are the primary part of the configuration object the Web SDK engine will use to assign the event listeners to the appropriate page DOM element.
-Signals are the primary piece of data that will need to be updated after initialization. Other configuration values such as schemas, data providers, and transformations are less likely to change.
-A signal can have the following structure. The signal `name`, `schema`, and `cateogry` are mandatory fields.
+Signals are the primary part of the Configuration Object that the Web SDK engine will use to assign the event listeners to the appropriate DOM element on the page.
+Signals are the primary piece of the configuration that will need to be updated after initialization. Other configuration values such as schemas and data providers are less likely to change.
+A signal can have the following structure. The signal `name`, `schema`, and `category` are mandatory fields.
 ```javascript
 {
     name: 'signal name',
-    schema: 'schemaId',
+    schema: 'developerName of schemaEvent',
     category: 'category', // example: engagment 
     event: {
       type: 'click',
       selector: 'reference to selector name'
     },
-    conditions: [
-      'isProductPage'
-    ],
     mapping: {
-      "attribute name": {
+      "developerName of schemaEvent field": {
         from: 'page',
-        selector: 'reference to selector name',
-        value: '#text' // or an attribute?
-      },
-      "attribute name": {
-        from: 'data',
-        provider: 'reference to data provider name',
-        attribute: 'attribute name'
+        selector: 'css selector or reference to selector name'
       }
    }
 }
@@ -65,13 +54,56 @@ A signal can have the following structure. The signal `name`, `schema`, and `cat
 
 **Note**: Calling `CDP.configure` method will force all registered signals on the page to be removed before the new set of signals is registered.
 
+#### Signal Mapping
+
+The `mapping` field for a registered signal is used to capture data from a web page and map it to the fields in the
+target schema set on the signal.  There are two supported mapping configurations that can be used:
+
+* Page
+    ```js
+    signal: {
+      ...
+      mapping: {
+        "schemaFieldDeveloperName": {
+          from: "page",
+          selector: "css selector or reference to selector name",
+          scope: "event"
+        }
+      }
+    }
+    ```
+  
+    A page mapping will capture the text value of the element that matches its selector and use that as the value
+    for the schema event field.  The `scope` value controls which element in the DOM is to execute the selector query.  
+    A value of `event` indicates the element that triggered the signal to be captured. Any other value will indicate the 
+    query should begin at the document root.
+  
+
+* Data
+    ```js
+    signal: {
+      ...
+      mapping: {
+        "schemaFieldDeveloperName": {
+          from: "data",
+          provider: "dataProviderName",
+          attribute: "attributeName"
+        }
+      }
+    }
+    ```
+  
+    A data mapping will capture the value returned by a data provider.  A data provider should return a JavaScript object
+    and the `attribute` value will be used to map a target attribute of that object to a schema event field.
+
+
 ### Selectors
 Every selector that is referenced in the Signal section is defined here. Each selector can return one or more DOM element.
 
 There are three types of selectors supported by the Web SDK:
 1. Selectors can be composed of a CSS selector only, defining the path to a DOM element.
 2. Selectors can be composed of a CSS selector and the text attribute of the last element in the path. 
-3. Custom javascript can be written to implement any unique cases where a CSS selector and text matching does not provide the required functionality. 
+3. Custom JavaScript can be written to implement any unique cases where a CSS selector and text matching does not provide the required functionality. 
 
 ```javascript
 selectors: {
@@ -102,44 +134,21 @@ schemas: {
   }
 ```
 
-### DataProviders
-Data providers represent information that cannot be captured directly from on-screen elements. They are basically functions that returns data information based on the input param.
+### Data Providers
+Data providers represent information that cannot be captured directly from on-screen elements. They are basically functions 
+that return JavaScript objects (e.g. from a data layer). 
+
+The function is passed a `domEvent` parameter which will contain the event that triggered this signal to be processed.  This
+could be used to extract some contextual information that is required to retrieve a piece of data. 
+
 ```javascript
 dataProviders: {
-        functionName (param) {
+        functionName (domEvent) {
             return <data based on the input param>
         }
     }
 ```
 
-### Transforms
-Transforms might be unnecessary for most use cases but are simple enough to support.  The basic contract would be:
-
-* Parameters: `value` - the input value
-
-* Returns: `transformedValue` - the output value after the transformation has occurred 
-
-Sample transform:
-
-```javascript
-transforms: {
-        toUpperCase (value) {
-            return value.toUpperCase()
-        }
-    }
-```
-
-### Conditions
-Like transforms, conditions might be unnecessary for most use cases but are simple to support.  The user would register a function signifying a specific condition to be matched for a signal to be considered “active” on a page.  
-
-Sample condition:
-```javascript
-conditions: {
-    isProductPage () {
-      return document.querySelector('.product-view') != null
-    }
-  }
-```
 # Sample Configuration Object
 
 ```javascript

@@ -94,7 +94,7 @@ let userIdentity = {
 describe("Configuration", () => {
     test("toJSON should serialize the client config correctly", () => {
         const configuration = new Configuration(config, identityMock);
-        const expected = '{"client":{"appSourceId":"test123","deviceId":"uuid","beaconEndpoint":"https://server.internal:8881/event","authEndpoint":"https://server.internal:8881/auth","sessionId":"uuid","retryAttempts":3,"retryDelayMS":3000,"consentEventTypeName":"consent-log","consentEventCategoryName":"Consent"},"schemas":{},"transforms":{},"dataProviders":{},"conditions":{},"signals":[],"selectors":{}}'
+        const expected = '{"client":{"appSourceId":"test123","deviceId":"uuid","beaconEndpoint":"https://server.internal:8881/event","authEndpoint":"https://server.internal:8881/auth","sessionId":"uuid","retryAttempts":3,"retryDelayMS":3000,"consentEventTypeName":"consentLog","consentEventCategoryName":"Consent"},"schemas":{},"transforms":{},"dataProviders":{},"conditions":{},"signals":[],"selectors":{}}'
         expect(configuration.toJSON()).toEqual(expected);
     });
 

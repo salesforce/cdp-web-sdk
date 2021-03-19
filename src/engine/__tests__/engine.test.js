@@ -472,13 +472,13 @@ it('should be able to process a consent opt-in signal for an element', () => {
 
     let config = {
         client: {
-            "consentEventTypeName": "consent-log",
+            "consentEventTypeName": "consentLog",
             "consentEventCategoryName": "Consent"
         },
         signals: [
             {
                 name: 'opt-in',
-                schema: 'consent-log',
+                schema: 'consentLog',
                 category: "Consent",
                 event: {
                     type: 'click',
@@ -512,13 +512,13 @@ it('should be able to process a consent opt-out signal for an element', () => {
 
     let config = {
         client: {
-            "consentEventTypeName": "consent-log",
+            "consentEventTypeName": "consentLog",
             "consentEventCategoryName": "Consent"
         },
         signals: [
             {
                 name: 'opt-out',
-                schema: 'consent-log',
+                schema: 'consentLog',
                 category: "Consent",
                 event: {
                     type: 'click',
@@ -542,4 +542,40 @@ it('should be able to process a consent opt-out signal for an element', () => {
     document.body.querySelector('button').dispatchEvent(event);
 
     expect(mockConsentOptOut).toHaveBeenCalledTimes(1);
+})
+
+it('should automatically track navigation events if it is enabled in the config', () => {
+    document.body.innerHTML = `
+    <button class="test-button">
+        <span>Click Me</span>
+    </button>`
+
+    let config = {
+        client: {
+            "automaticallyTrackNavigationEvents": true
+        },
+        signals: [
+            {
+                name: 'opt-in',
+                schema: 'consentLog',
+                category: "Consent",
+                event: {
+                    type: 'click',
+                    selector: 'selector-name-0'
+                }
+            }
+        ],
+        selectors: {
+            'selector-name-0': {
+                selector: '.test-button'
+            }
+        }
+    }
+
+    createEngine(createConfigurationMock(config));
+
+    expect(client.sendEvent).toHaveBeenCalledWith('Behavioral', 'navigation', {
+        hash: '',
+        path: '/'
+    })
 })

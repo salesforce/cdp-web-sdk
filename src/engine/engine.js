@@ -9,6 +9,7 @@
 
 import Logger from "@app/logs/Logger";
 import {engineConfig} from '@app/settings/Constants';
+import {eventCategories} from "@app/models/eventCategories";
 import {eventClientConfig} from '@app/settings/Constants';
 
 const valueExtractors = {
@@ -20,15 +21,65 @@ const LOGGER_NAME = "engine.js"
 
 let unsubscribeCallbacks = [];
 let errors = [];
+let navigationEventsUnlocked = true;
 
 export default class Engine {
 
-    constructor(client, configuration) {}
+    constructor(client, configuration) {
+        if (configuration.getClient().automaticallyTrackNavigationEvents) {
+            trackNavigationEvents(client, configuration);
+            setInterval(function () {
+                navigationEventsUnlocked = true
+            }, 100);
+        }
+    }
 
     createEngine ({ client, configuration, global }) {
         setMutationObserver({ client, configuration, global });
         processSignals({ client, configuration, global });
         return errors;
+    }
+}
+
+function trackNavigationEvents(client, configuration) {
+    let locationPathName;
+    let locationHash;
+
+    // For clicking on the browser back/forward buttons
+    window.addEventListener('popstate', function(event) {
+        locationHash = document.location.hash;
+        locationPathName = document.location.pathname;
+        sendNavigationEvent({ hash:locationHash, path:locationPathName }, client, configuration);
+    });
+
+    // For single app state change
+    (function(history){
+        let pushState = history.pushState;
+        history.pushState = function(state) {
+            pushState.apply(history, arguments);
+            locationHash = document.location.hash;
+            locationPathName = document.location.pathname;
+            sendNavigationEvent({hash: locationHash, path: locationPathName}, client, configuration);
+        };
+    })(window.history);
+
+    // For websites using hash in the url
+    window.addEventListener('hashchange', function() {
+        locationHash = document.location.hash;
+        locationPathName = document.location.pathname;
+        sendNavigationEvent({ hash:locationHash, path:locationPathName }, client, configuration);
+    });
+
+    // // For non-single app websites
+    locationHash = document.location.hash;
+    locationPathName = document.location.pathname;
+    sendNavigationEvent({ hash:locationHash, path:locationPathName }, client, configuration);
+}
+
+function sendNavigationEvent(capturedValue, client, configuration) {
+    if (navigationEventsUnlocked && configuration.getClient().automaticallyTrackNavigationEvents) {
+        navigationEventsUnlocked = true;
+        client.sendEvent(eventCategories.BEHAVIORAL, eventClientConfig.NAVIGATION_EVENT_SCHEMA, capturedValue);
     }
 }
 

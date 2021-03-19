@@ -7,6 +7,15 @@ From the project's directory:
 
 `npm run build`
 
+
+To start the dev server:
+
+`npm run dev`
+
+This command will automatically open your web browser to http://localhost:8081/ which contains the SDK, sample event scripts, and the eCommerce test site.
+
+*Note: ensure the build was ran at least once before starting the dev server. If not, the eCommerce test site may not load properly.*
+
 ## Test
 To run all tests: 
 
@@ -54,10 +63,14 @@ List of CDP Client Configuration parameters are described in the following table
 | authEndpoint                       | String  |             | yes      | The `authEndpoint` structure is `http://<TSE>/web/authentication` . Get the Tenant Specific Endpoint (TSE) value from your CDP admin.                                      |
 | deviceId                           | String  |             | no       | `deviceId` can also be defined in the client configuration if needed, otherwise the identifier created and managed by the SDK will be used.                                |
 | sessionId                          | String  |             | no       | `sessionId` will be automatically populated by Web SDK and no need to be defined by the user                                                                               |
-| consentEventTypeName               | String  | consent-log | no       | This parameter set the name of the Consent Event Type.                                                                                                                     |
-| consentEventCategoryName           | String  | Consent     | no       | This parameter set the category name of the Consent Event.                                                                                                                     |
+| consentEventTypeName               | String  | consentLog  | no       | This parameter set the name of the Consent Event Type.                                                                                                                     |
+| consentEventCategoryName           | String  | Consent     | no       | This parameter set the category name of the Consent Event.                                                                                                                 |
 | retryAttempts                      | Integer | 3           | no       | This parameter is the number of retry attempts in case of failing sending events to the Beacon service.                                                                    |
 | retryDelayMS                       | Integer | 3000        | no       | This parameter is the delay duration between retry attempts (milliseconds) in case of failing sending events to the Beacon service.                                        |
+| automaticallyTrackNavigationEvents | Boolean | false       | no       | by enabling this flag, the Web SDK will automatically track the user page navigation events and captures   `document.location.hash`   and   ` document.location.pathname`. |
+
+The CDP Configuration object has more fields than the `client` config. The purpose of them is to help instrument the events in higher level of abstraction than directly writing code. There will be a Chrome Extension that can help for constructing the configuration object.
+This [Document](CONFIGURATION.md) explains the details of the CDP Configuration object.
 
 ### Get configuration object
 ```javascript
@@ -84,12 +97,19 @@ These functions should be used in callbacks from the client's consent management
 ```javascript
 CDP.consentOptIn();
 ```
-Grant consent to the SDK to allow events to emit. It will send the CDP consent opt in event and also create a cookie signifying the user opted in. On subsequent page loads the presence of this cookie will allow events to begin transmitting immediately. 
+Grant consent to the SDK to allow events to emit. It will send the CDP consent opt in event and also create a cookie signifying the user opted in. On subsequent page loads the presence of this cookie will allow events to begin transmitting immediately.
+
+Two cookies of `CustomerConsentCookie` and `CustomerCookieID` will be set on the user browser upon accepting the consent.
+
+| Cookie Name           | Expiration Date | Value                                |
+|-----------------------|-----------------|--------------------------------------|
+| CustomerConsentCookie | Session         | opt-in                               |
+| CustomerCookieID      | 180 days        | xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx |
 
 ```javascript
 CDP.consentOptOut();
 ```
-Removes consent, stops events from being sent. The cookie will be removed and events will stop emitting immediately.
+Removes consent, stops events from being sent. The `CustomerConsentCookie` and `CustomerConsentCookie` cookie will be removed and events will stop emitting immediately.
 
 *Note:* When testing out this functionality in a browser ensure that any option to "Continue where you left off" when the browser is closed is turned OFF. If that feature is enabled the CustomerConsentCookie session cookie will persist after closing and reopening the browser.
 
