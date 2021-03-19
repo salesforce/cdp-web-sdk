@@ -7,15 +7,6 @@ From the project's directory:
 
 `npm run build`
 
-
-To start the dev server:
-
-`npm run dev`
-
-This command will automatically open your web browser to http://localhost:8081/ which contains the SDK, sample event scripts, and the eCommerce test site.
-
-*Note: ensure the build was ran at least once before starting the dev server. If not, the eCommerce test site may not load properly.*
-
 ## Test
 To run all tests: 
 
