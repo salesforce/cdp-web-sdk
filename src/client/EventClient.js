@@ -6,6 +6,7 @@
  */
 
 import generateEventId from '@app/utils/generateEventId';
+import base64UnicodeEncoder from '@app/utils/base64UnicodeEncoder';
 import {eventClientConfig} from '@app/settings/Constants';
 import Logger from "@app/logs/Logger";
 import {identityConfig} from '@app/settings/Constants';
@@ -38,7 +39,7 @@ export default class EventClient {
                     ]
                 };
 
-                let eventParam = eventClientConfig.EVENT_PARAM_NAME + "=" + btoa(JSON.stringify(eventPayload)); //base64encode
+                let eventParam = eventClientConfig.EVENT_PARAM_NAME + "=" + base64UnicodeEncoder(JSON.stringify(eventPayload));
                 let eventFullUrl = this.configuration.getClient().beaconEndpoint + "?" + eventParam;
 
                 if (eventFullUrl.length > eventClientConfig.MAX_URL_LENGTH) {
